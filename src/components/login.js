@@ -2,7 +2,7 @@ import { GoogleLogin } from "@leecheuk/react-google-login";
 import { gapi, loadAuth2 } from "gapi-script";
 import { useEffect } from "react";
 
-const client_id = ''
+const client_id = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 
 const Login = () => {
   const event = {
@@ -66,7 +66,7 @@ const Login = () => {
   }, []);
 
   const onSuccess = (res) => {
-    addEvent("primary", event, res.accessToken);
+    console.log("success");
   };
 
   const onFailure = (res) => console.log("Fail!: ", res);

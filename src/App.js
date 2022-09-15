@@ -1,10 +1,11 @@
-import  Login  from './components/login'
+import  Authorize  from './components/authorize'
 import './App.css';
+
 
 function App() {
   return (
     <div className="App">
-      <Login />
+      <Authorize />
     </div>
   );
 }
