@@ -28,14 +28,16 @@ const Authorize = () => {
     const user = GoogleAuth.current.currentUser.get();
     const isAuthorized = user.hasGrantedScopes(scope);
     if (isAuthorized) {
-      sessionStorage.setItem('d.access_token', user.getAuthResponse().access_token);
+      sessionStorage.setItem(
+        "d.access_token",
+        user.getAuthResponse().access_token
+      );
       setIsSignedIn(isAuthorized);
     } else {
-      sessionStorage.removeItem('d.access_token');
+      sessionStorage.removeItem("d.access_token");
       setIsSignedIn(isAuthorized);
     }
   }
-
 
   useEffect(() => {
     gapi.load("client:auth2", () => {
@@ -54,8 +56,6 @@ const Authorize = () => {
         });
     });
   }, []);
-
-
 
   return (
     <>
