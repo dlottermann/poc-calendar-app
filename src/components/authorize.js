@@ -7,75 +7,102 @@ const apiKey = process.env.REACT_APP_GOOGLE_API_KEY;
 const scope =
   "https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events";
 
-const handleAuthClick = () => {
-  gapi.auth2.getAuthInstance().signIn();
-};
-
-const handleSignoutClick = () => {
-  gapi.auth2.getAuthInstance().signOut();
-};
-
-const handleRevokeClick = () => {
-  gapi.auth2.getAuthInstance().disconnect();
-};
-
 const Authorize = () => {
   const GoogleAuth = useRef(undefined);
 
-  const [isSignedIn, setIsSignedIn] = useState(null);
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [token, setToken] = useState('')
+
+  const scopes = scope;
+
+  async function handleAuthClick() {
+    setIsLoading(true);
+    try {
+      await gapi.auth2.getAuthInstance().signIn();
+    } catch (e) {
+      if (e.error === "popup_closed_by_user") setIsLoading(false);
+    }
+  }
+
+  function handleSignoutClick() {
+    setIsLoading(true);
+    gapi.auth2.getAuthInstance().signOut();
+  }
+
+  function handleRevokeClick() {
+    setIsLoading(true);
+    gapi.auth2.getAuthInstance().disconnect();
+  }
 
   function setSigninStatus() {
     const user = GoogleAuth.current.currentUser.get();
-    const isAuthorized = user.hasGrantedScopes(scope);
+    const isAuthorized = user.hasGrantedScopes(scopes);
     if (isAuthorized) {
       sessionStorage.setItem(
         "d.access_token",
         user.getAuthResponse().access_token
       );
-      setIsSignedIn(isAuthorized);
+      setIsSignedIn(isAuthorized)
+      setToken(user.getAuthResponse().access_token)
     } else {
       sessionStorage.removeItem("d.access_token");
       setIsSignedIn(isAuthorized);
     }
+    setIsLoading(false);
   }
 
   useEffect(() => {
-    gapi.load("client:auth2", () => {
-      gapi.client
-        .init({
-          apiKey,
-          clientId,
-          scope,
-        })
-        .then(() => {
-          GoogleAuth.current = gapi.auth2.getAuthInstance();
+    gapi.load("client:auth2", async () => {
+      await gapi.client.init({
+        apiKey,
+        clientId,
+        scope,
+        access_type: "offline",
+        include_granted_scopes: true,
+      });
 
-          // Listen for sign-in state changes.
-          GoogleAuth.current.isSignedIn.listen(setSigninStatus);
-          setSigninStatus();
-        });
+      GoogleAuth.current = gapi.auth2.getAuthInstance();
+      GoogleAuth.current.isSignedIn.listen(setSigninStatus);
+      setSigninStatus();
     });
-  }, []);
+  }, [setSigninStatus]);
 
   return (
     <>
       <p>Calendar API.</p>
 
       {isSignedIn ? (
-        <button id="signout-button" onClick={handleSignoutClick}>
+        <button disabled={isLoading} id="signout-button" onClick={handleSignoutClick}>
           Sign Out
         </button>
       ) : (
-        <button id="authorize-button" onClick={handleAuthClick}>
+        <button disabled={isLoading} id="authorize-button" onClick={handleAuthClick}>
           Authorize
         </button>
       )}
 
-      <button id="revoke-button" onClick={handleRevokeClick}>
+      <button id="revoke-button" onClick={handleRevokeClick} disabled={isLoading}>
         Revoke
       </button>
 
-      <div id="content"></div>
+      <button
+        disabled={isLoading}
+        id="revoke-button"
+        onClick={() =>{;
+          gapi.auth2
+            .getAuthInstance()
+            .currentUser.get()
+            .reloadAuthResponse()
+            setSigninStatus();
+        }}
+      >
+        Refresh token
+      </button>
+
+      <div id="content">
+        {token}
+      </div>
     </>
   );
 };
